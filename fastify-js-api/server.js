@@ -7,6 +7,8 @@ const dbschema = require("./schemas/db.schema");
 
 const PORT = process.env.PORT || 3002;
 
+fastify.register(require("./plugins/cache.plugin"));
+
 fastify.register(fastifyEnv, {
   schema: dbschema,
   dotenv: true,
@@ -15,6 +17,8 @@ fastify.register(fastifyEnv, {
 fastify.register(require("./plugins/mongodb.plugin"));
 
 fastify.register(messagesRoutes, { prefix: "/api" });
+
+fastify.register(require("./routes/items.routes"), { prefix: "/plugin" });
 
 
 

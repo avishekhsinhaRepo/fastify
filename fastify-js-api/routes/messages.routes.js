@@ -1,13 +1,37 @@
 const { getMessages, createMessages } = require("../schemas/schema");
 
 async function messageRoutes(fastify, options) {
-  const collection = fastify.mongo.client.db().collection("users");
+  fastify.decorate("messageLogger", (message) => {
+    console.log(`Message is: ${message}`);
+  });
+
+  fastify.decorateRequest("getUserAgent", function () {
+    return this.headers["user-agent"];
+  });
+
+  fastify.decorateReply("sendSuccess", function (payload) {
+    this.type("application/json").code(200);
+    this.send({ status: "success", data: payload });
+  });
+
+  const collection = fastify.mongo.client.db().collection("messages");
 
   fastify.get("/messages", async (request, reply) => {
     const messages = await collection.find().toArray();
-    return {
+    messages.forEach((message) => {
+      fastify.messageLogger(message.message);
+    });
+
+    const response = {
       messages,
+      userAgent: request.getUserAgent(),
     };
+    reply.sendSuccess(response);
+
+    // return {
+    //   messages,
+    //   userAgent: request.getUserAgent(),
+    // };
   });
 
   fastify.get("/messages/:id", { schema: getMessages }, async (request, reply) => {
